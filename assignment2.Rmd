@@ -1,0 +1,116 @@
+---
+title: "Assignment2"
+author: "Sarah Kim"
+date: "2025-04-16"
+output: html_document
+---
+
+
+```{r}
+Sys.setenv(LANGUAGE="en")
+Sys.setlocale("LC_ALL", "en_US.UTF-8")
+setwd("C:/Users/skimj/Desktop/SU/HRP 203/assignment_2/Assignment2")
+```
+
+
+
+## Import raw CSV data
+
+```{r}
+cohort <- read.csv("raw-data/cohort.csv")
+View(cohort)
+```
+
+
+## Table: Descriptive stats
+
+```{r}
+#install.packages("psych")
+library(psych)
+
+attach(cohort)
+describe(cohort)
+cohort_sumst1 <- as.data.frame(describe(cohort))
+write.csv(cohort_sumst1, "output/cohort_sumst.csv")
+
+#summary(cohort)
+#apply(cohort,2,summary)
+#cohort_sumst2 <- as.data.frame(apply(cohort,2,summary))
+```
+
+
+## Linear regression results:
+### Cost (Y) predicted by all other factors
+```{r}
+#install.packages("broom")
+library(broom)
+library(tidyverse)
+
+
+attach(cohort)
+reg <- lm(cost ~ smoke + female + age + cardiac, data=cohort)
+summary(reg)
+
+reg_est <- tidy(reg)
+write.csv(reg_est, "output/reg_est.csv")
+```
+
+
+## Visualization:
+### Age and cost distributions
+```{r}
+library(ggplot2)
+
+# age
+ggplot(cohort, aes(x = age)) + 
+  geom_freqpoly(bins = 10) +
+  labs(x = "Age (years)",
+       title = "Age Distribution") + 
+  theme_bw()
+ggsave("output/ageplot.png")
+# cost
+ggplot(cohort, aes(x = cost)) + 
+  geom_freqpoly(bins = 10) +
+  labs(x = "Cost ($)",
+       title = "Cost Distribution") + 
+  theme_bw()
+ggsave("output/costplot.png")
+```
+
+
+### Relationship between age (X-axis) and cost (Y-axis)
+```{r}
+ggplot(cohort, aes(x = age, y = cost)) + 
+  geom_point() + 
+  geom_smooth(method = "lm", se = FALSE) + 
+  labs(x = "Age (years)", y = "Cost ($)", 
+       title = "Plot of Age and Costs") + 
+  theme_bw()
+ggsave("output/scatter_reg_all.png")
+```
+
+### Relationship between age (X-axis) and cost (Y-axis), by sex
+```{r}
+# separate color results by gender
+cohort$female_f <- factor(female, levels = c(0,1), labels = c("male", "female"))
+
+ggplot(cohort, aes(x = age, y = cost, fill = female_f, color = female_f)) + 
+  geom_point(aes(fill = female_f), shape = 21) + 
+  scale_fill_manual(values = c("male" = "lightblue", "female" = "lightcoral"))  + 
+  geom_smooth(method = "lm", se = FALSE) + 
+  scale_color_manual(values = c("male" = "blue", "female" = "red")) +
+  labs(x = "Age (years)", y = "Cost ($)", 
+       fill = "Sex", color = "Sex", 
+       title = "Plot of Age and Costs by Gender") + 
+  theme_bw()
+ggsave("output/scatter_reg_gender.png")
+
+```
+
+
+## Summary
+The sample in the cohort.csv file ranges between 18 to 70 years of age and consists of 16% smokers, 55% females, and 22% patients with heart problems. 
+Smoking status, age, and cardiac-disease status are positively correlated with healthcare costs, whereas being a female is associated with reduced costs. Accounting for smoking status, gender, cardiac disease status, a person's age is associated with an average of $15.78 higher cost for every additional year of age. Across all ages, females tend to have lower costs than males, but the relationship between age and cost seem to be parallel between males and females.
+
+I did not use generative AI technology (e.g., ChatGPT) to complete any portion of the work.
+
